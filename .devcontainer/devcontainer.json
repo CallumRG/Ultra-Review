@@ -1,0 +1,7 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+  },
+  "postCreateCommand": "bash ./install-dependencies.sh",
+  "forwardPorts": [3000]
+}
