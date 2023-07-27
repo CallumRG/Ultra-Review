@@ -8,10 +8,10 @@ const MyAppBar = () => {
       <Toolbar >
         <Typography variant = "h3">Ultra Review</Typography>
         <div style={{ marginLeft: '2rem' }}>
-          <Button variant="contained" color="primary" component={Link} to="/">Home</Button>
+          <Button variant="contained" color="primary" component={Link} to="/">Landing</Button>
           <Button variant="contained" color="primary" component={Link} to="/search">Search</Button>
           <Button variant="contained" color="primary" component={Link} to="/review">Review</Button>
-          <Button variant="contained" color="primary" component={Link} to="/mypage">My Page</Button>
+          <Button variant="contained" color="primary" component={Link} to="/mypage">Trivia</Button>
         </div>
       </Toolbar>
     </AppBar>

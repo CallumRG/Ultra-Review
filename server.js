@@ -111,6 +111,39 @@ app.post('/api/searchMovies', (req, res) => {
 	connection.end();
 });
 
+app.post('/api/getTrivia', (req, res) => {
+	let connection = mysql.createConnection(config);
+  
+	let sql = `SELECT movie_title, movie_year, director_name
+		FROM (
+		SELECT movies.name AS movie_title, movies.year AS movie_year, 
+				GROUP_CONCAT(DISTINCT CONCAT(directors.first_name, " ", directors.last_name)) AS director_name,
+				ROW_NUMBER() OVER (PARTITION BY movies.id ORDER BY RAND()) AS rn
+		FROM movies
+		JOIN movies_directors ON movies.id = movies_directors.movie_id
+		JOIN directors ON movies_directors.director_id = directors.id
+		GROUP BY movies.id
+		) AS subquery
+		WHERE rn = 1
+		ORDER BY RAND()
+		LIMIT 4;
+		`;
+	
+	connection.query(sql, (error, results, fields) => {
+	
+		if (error) {
+			return res.status(500).send({ error: 'Error retrieving movies' });
+		}
+		
+		let string = JSON.stringify(results);
+
+		res.send({ express: string });
+	});
+	
+	
+	connection.end();
+  });
+
 app.post('/api/loadUserSettings', (req, res) => {
 
 	let connection = mysql.createConnection(config);
