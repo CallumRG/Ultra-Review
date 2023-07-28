@@ -5,10 +5,6 @@ import * as math from 'mathjs'
 
 
 const MyPage = () => {
-    const getRandomInt = (max) => {
-        return Math.floor(Math.random() * max);
-      }
-
     const [currentScore, setCurrentScore] = React.useState(0);
     const [maxScore, setMaxScore] = React.useState(0);
     const [selection, setSelection] = React.useState('');
@@ -36,8 +32,6 @@ const MyPage = () => {
 
           // Ensure the response is an array by parsing it using JSON.parse()
           const dataArray = JSON.parse(data.express);
-
-          console.log(dataArray);
 
           setTriviaData(dataArray);
         } catch (error) {

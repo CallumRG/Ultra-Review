@@ -75,16 +75,19 @@ app.post('/api/addReview', (req, res) => {
 	connection.end();
 });
 
+// Route for searching movies based on user input
 app.post('/api/searchMovies', (req, res) => {
+	// Create a MySQL connection using the provided config
 	let connection = mysql.createConnection(config);
+	
+	// Prepare the values for the SQL query using user input (enteredMovie, enteredActor, enteredDirector)
 	let values = [
 		`%${req.body.enteredMovie}%`,
 		`%${req.body.enteredActor}%`,
 		`%${req.body.enteredDirector}%`
 	];
 	
-	console.log(values);
-	
+	// SQL query to retrieve movie details, director names, reviews, and average review score
 	let sql = `SELECT movies.name AS movie_name, 
 	CONCAT(directors.first_name, " ", directors.last_name) AS director_name, 
 	GROUP_CONCAT(DISTINCT Review.reviewContent) AS reviews, 
@@ -99,21 +102,28 @@ app.post('/api/searchMovies', (req, res) => {
 	AND CONCAT(directors.first_name, " ", directors.last_name) LIKE ?
 	GROUP BY movies.id, directors.id;`;
 	
+	// Execute the SQL query with the prepared values
 	connection.query(sql, values, (error, results, fields) => {
 		if (error) {
+			// Handle any errors that occurred during the query
 			return res.status(500).send({ error: 'Error searching movies' });
 		}
 		
+		// Convert the query results to a JSON string and send it in the response
 		let string = JSON.stringify(results);
 		res.send({ express: string });
 	});
 	
+	// Close the MySQL connection
 	connection.end();
 });
 
+// Route for getting random movie trivia
 app.post('/api/getTrivia', (req, res) => {
+	// Create a MySQL connection using the provided config
 	let connection = mysql.createConnection(config);
   
+	// SQL query to retrieve random movie trivia (movie title, year, and director name)
 	let sql = `SELECT movie_title, movie_year, director_name
 		FROM (
 		SELECT movies.name AS movie_title, movies.year AS movie_year, 
@@ -129,20 +139,23 @@ app.post('/api/getTrivia', (req, res) => {
 		LIMIT 4;
 		`;
 	
+	// Execute the SQL query to retrieve random movie trivia
 	connection.query(sql, (error, results, fields) => {
 	
 		if (error) {
+			// Handle any errors that occurred during the query
 			return res.status(500).send({ error: 'Error retrieving movies' });
 		}
 		
+		// Convert the query results to a JSON string and send it in the response
 		let string = JSON.stringify(results);
-
 		res.send({ express: string });
 	});
 	
-	
+	// Close the MySQL connection
 	connection.end();
-  });
+});
+
 
 app.post('/api/loadUserSettings', (req, res) => {
 
