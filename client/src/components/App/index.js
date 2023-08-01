@@ -8,7 +8,9 @@ import MyPage from '../MyPage';
 
 const App = () => {
   return (
+    // Set up the Router to enable client-side routing
     <Router>
+      {/* Define the routes using the Routes component */}
       <Routes>
         <Route exact path="/" element={<LandingPage />} />
         <Route path="/search" element={<SearchPage />} />

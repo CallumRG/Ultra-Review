@@ -88,19 +88,19 @@ app.post('/api/searchMovies', (req, res) => {
 	];
 	
 	// SQL query to retrieve movie details, director names, reviews, and average review score
-	let sql = `SELECT movies.name AS movie_name, 
-	CONCAT(directors.first_name, " ", directors.last_name) AS director_name, 
-	GROUP_CONCAT(DISTINCT Review.reviewContent) AS reviews, 
-	AVG(Review.reviewScore) AS average_score
-	FROM movies
-	LEFT JOIN movies_directors ON movies.id = movies_directors.movie_id
-	LEFT JOIN directors ON movies_directors.director_id = directors.id
-	LEFT JOIN Review ON movies.id = Review.movieID
-	LEFT JOIN roles ON movies.id = roles.movie_id
-	WHERE movies.name LIKE ?
-	AND roles.actor_id IN (SELECT id FROM actors WHERE CONCAT(first_name, " ", last_name) LIKE ?)
-	AND CONCAT(directors.first_name, " ", directors.last_name) LIKE ?
-	GROUP BY movies.id, directors.id;`;
+	let sql = `SELECT mv.name AS movie_name, 
+		CONCAT(dir.first_name, " ", dir.last_name) AS director_name, 
+		GROUP_CONCAT(DISTINCT rev.reviewContent) AS reviews, 
+		AVG(rev.reviewScore) AS average_score
+		FROM movies AS mv
+		LEFT JOIN movies_directors AS md ON mv.id = md.movie_id
+		LEFT JOIN directors AS dir ON md.director_id = dir.id
+		LEFT JOIN Review AS rev ON mv.id = rev.movieID
+		LEFT JOIN roles AS r ON mv.id = r.movie_id
+		WHERE mv.name LIKE ?
+		AND r.actor_id IN (SELECT a.id FROM actors AS a WHERE CONCAT(a.first_name, " ", a.last_name) LIKE ?)
+		AND CONCAT(dir.first_name, " ", dir.last_name) LIKE ?
+		GROUP BY mv.id, dir.id;`;
 	
 	// Execute the SQL query with the prepared values
 	connection.query(sql, values, (error, results, fields) => {
@@ -126,13 +126,18 @@ app.post('/api/getTrivia', (req, res) => {
 	// SQL query to retrieve random movie trivia (movie title, year, and director name)
 	let sql = `SELECT movie_title, movie_year, director_name
 		FROM (
-		SELECT movies.name AS movie_title, movies.year AS movie_year, 
-				GROUP_CONCAT(DISTINCT CONCAT(directors.first_name, " ", directors.last_name)) AS director_name,
-				ROW_NUMBER() OVER (PARTITION BY movies.id ORDER BY RAND()) AS rn
-		FROM movies
-		JOIN movies_directors ON movies.id = movies_directors.movie_id
-		JOIN directors ON movies_directors.director_id = directors.id
-		GROUP BY movies.id
+			SELECT movies.name AS movie_title, movies.year AS movie_year, 
+				CONCAT(directors.first_name, " ", directors.last_name) AS director_name,
+				ROW_NUMBER() OVER (PARTITION BY directors.id ORDER BY RAND()) AS rn
+			FROM directors
+			JOIN movies_directors ON directors.id = movies_directors.director_id
+			JOIN movies ON movies_directors.movie_id = movies.id
+			WHERE movies.id NOT IN (
+				SELECT movie_id
+				FROM movies_directors
+				GROUP BY movie_id
+				HAVING COUNT(DISTINCT director_id) > 1
+			)
 		) AS subquery
 		WHERE rn = 1
 		ORDER BY RAND()
@@ -156,6 +161,34 @@ app.post('/api/getTrivia', (req, res) => {
 	connection.end();
 });
 
+app.post('/api/addAttempt', (req, res) => {
+
+	//get values for sql statement
+	const values = [
+		req.body.currentScore,
+		req.body.userID
+	];
+
+	//start connection
+	const connection = mysql.createConnection(config);
+
+	//statement for adding the new attempt to the table
+	const sql = `INSERT INTO triviaAttempt (score, userID) VALUES (?, ?)`;
+
+	//tries query
+	connection.query(sql, values, (error, results, fields) => {
+		if (error) {
+			//throws error if error from query
+			console.error('Error adding attempt:', error);
+			return res.status(500).send({ error: 'Error adding review' });
+		}
+		
+		//sends back okay
+		res.sendStatus(200);
+	});
+
+	connection.end();
+});
 
 app.post('/api/loadUserSettings', (req, res) => {
 
